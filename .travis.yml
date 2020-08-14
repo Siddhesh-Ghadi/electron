@@ -27,8 +27,26 @@ before_script:
   - ninja -C out
   - cd ../
   - export DEPOT_TOOLS_GN="$(pwd)/gn/out/gn"
+  - #
+  - git clone https://github.com/leo-lb/depot_tools
+  - git -C depot_tools checkout ppc64le
+  - export DEPOT_TOOLS_UPDATE=0
+  - export PATH=$(pwd)/gn/out:$PATH:$(pwd)/depot_tools
+  - export VPYTHON_BYPASS="manually managed python not supported by chrome operations"
+  - export GYP_DEFINES="disable_nacl=1"
+  - mkdir -p electron-gn && cd electron-gn
+  - gclient config --name "src/electron" --unmanaged https://github.com/leo-lb/electron@7-2-x
+  - gclient sync --with_branch_heads --with_tags --no-history
 
 script:
-  - clang --version
-  - python --version
-  - echo $PATH
+  - cd src
+  - cd third_party/libvpx
+  - mkdir -p source/config/linux/ppc64
+  - ./generate_gni.sh
+  - cd ../../
+  - cd third_party/ffmpeg
+  - ./chromium/scripts/build_ffmpeg.py linux ppc64
+  - ./chromium/scripts/generate_gn.py
+  - ./chromium/scripts/copy_config.sh
+  - cd ../../
+  - ls
